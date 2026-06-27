@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Grokipedia Redirect",
+  "version": "1.1.2",
+  "description": "Opens Wikipedia article links in Grokipedia, with fallback to Wikipedia when missing.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Grokipedia Redirect",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["url-utils.js", "content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://grokipedia.com/page/*"],
+      "js": ["url-utils.js", "grokipedia-fallback.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
