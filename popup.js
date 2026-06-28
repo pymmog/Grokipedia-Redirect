@@ -1,9 +1,15 @@
-const checkbox = document.getElementById("enabled");
+const switchEl = document.getElementById("enabled");
+
+function setEnabled(enabled) {
+  switchEl.setAttribute("aria-checked", enabled ? "true" : "false");
+}
 
 chrome.storage.sync.get({ enabled: true }, (result) => {
-  checkbox.checked = result.enabled;
+  setEnabled(result.enabled);
 });
 
-checkbox.addEventListener("change", () => {
-  chrome.storage.sync.set({ enabled: checkbox.checked });
+switchEl.addEventListener("click", () => {
+  const enabled = switchEl.getAttribute("aria-checked") !== "true";
+  setEnabled(enabled);
+  chrome.storage.sync.set({ enabled });
 });
