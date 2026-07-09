@@ -34,6 +34,8 @@ const {
   wikipediaUrlToGrokipedia,
   grokipediaCheckUrl,
   fallbackStorageKey,
+  skipRedirectStorageKey,
+  normalizeWikipediaUrl,
   grokipediaUrlWithFallback,
   getFallbackFromHash,
   getSectionFromFallbackHash,
@@ -148,6 +150,33 @@ for (const [input, expected] of storageKeyCases) {
   }
 }
 
+const skipKeyCases = [
+  [
+    "https://en.wikipedia.org/wiki/Albert_Einstein#Early_life",
+    "skip:https://en.wikipedia.org/wiki/Albert_Einstein",
+  ],
+  [
+    "https://de.wikipedia.org/wiki/Albert_Einstein",
+    "skip:https://de.wikipedia.org/wiki/Albert_Einstein",
+  ],
+];
+
+for (const [input, expected] of skipKeyCases) {
+  const actual = skipRedirectStorageKey(input);
+  if (actual !== expected) {
+    failed += 1;
+    console.error(`FAIL skip key: ${input}\n  expected: ${expected}\n  actual:   ${actual}`);
+  }
+}
+
+const normalized = normalizeWikipediaUrl(
+  "https://en.wikipedia.org/wiki/Albert_Einstein#Early_life"
+);
+if (normalized !== "https://en.wikipedia.org/wiki/Albert_Einstein") {
+  failed += 1;
+  console.error(`FAIL normalize\n  expected bare article url\n  actual: ${normalized}`);
+}
+
 for (const [wikipediaUrl, grokipediaUrl, expected] of fallbackHashCases) {
   const actual = grokipediaUrlWithFallback(wikipediaUrl, grokipediaUrl);
   if (actual !== expected) {
@@ -193,7 +222,8 @@ console.log(
     cases.length +
     checkUrlCases.length +
     storageKeyCases.length +
+    skipKeyCases.length +
     fallbackHashCases.length +
-    3
+    4
   } URL mapping tests passed.`
 );

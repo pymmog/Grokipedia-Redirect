@@ -42,12 +42,26 @@
     return `https://en.wikipedia.org/wiki/${wikipediaTitle}`;
   }
 
+  function markSkipOnce(wikipediaUrl) {
+    const key = skipRedirectStorageKey(wikipediaUrl);
+    if (!key) {
+      return;
+    }
+
+    try {
+      chrome.storage.session.set({ [key]: true });
+    } catch {
+      // If session storage fails, the user may bounce once; hash fallback still works.
+    }
+  }
+
   function redirectToWikipedia(wikipediaUrl) {
     if (!wikipediaUrl || redirected) {
       return;
     }
 
     redirected = true;
+    markSkipOnce(wikipediaUrl);
     window.location.replace(wikipediaUrl);
   }
 

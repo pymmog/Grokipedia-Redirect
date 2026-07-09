@@ -1,13 +1,15 @@
 # Grokipedia Redirect
 
-A Chrome extension that opens Wikipedia article links in [Grokipedia](https://grokipedia.com) instead.
+A Chrome extension that opens Wikipedia articles in [Grokipedia](https://grokipedia.com) instead.
 
 ## What it does
 
-When you click a Wikipedia article link anywhere in Chrome, the extension sends you to the matching Grokipedia page.
+When you open a Wikipedia article (by clicking a link on Wikipedia, typing a Wikipedia URL, or following a bookmark), the extension sends you to the matching Grokipedia page.
 
 - **Article exists on Grokipedia** → you see the Grokipedia article
-- **Article missing on Grokipedia** → you are sent back to the original Wikipedia page you clicked
+- **Article missing on Grokipedia** → you are sent back to the original Wikipedia page
+
+The extension only runs on Wikipedia and Grokipedia pages — not on every website.
 
 ## Install
 
@@ -21,12 +23,12 @@ The extension icon should appear in your Chrome toolbar.
 
 ## Use
 
-1. Click any Wikipedia article link as you normally would
+1. Open any Wikipedia article as you normally would
 2. The extension handles the redirect automatically
 
 ### Open Wikipedia instead
 
-Hold **Cmd** (Mac) or **Ctrl** (Windows/Linux), or hold **Shift**, while clicking to skip the redirect and open Wikipedia directly.
+Hold **Cmd** (Mac) or **Ctrl** (Windows/Linux), or hold **Shift**, while clicking a Wikipedia article link to skip the redirect and open Wikipedia directly.
 
 ### Turn it off temporarily
 
@@ -37,11 +39,11 @@ Turn it back on anytime from the same popup.
 
 ## How it works (short version)
 
-1. You click a Wikipedia link
+1. You open a Wikipedia article
 2. The extension opens the Grokipedia version of that article
-3. If Grokipedia does not have the article, it sends you back to the Wikipedia link you clicked
+3. If Grokipedia does not have the article, it sends you back to Wikipedia once (without looping)
 
-No account is required. The extension only runs when you click Wikipedia article links.
+No account is required. The extension only injects scripts on Wikipedia and Grokipedia.
 
 ## Updating
 

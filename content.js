@@ -3,9 +3,11 @@
 
   // Default on so early clicks still redirect before storage resolves.
   let enabled = true;
+  let pageRedirectChecked = false;
 
   chrome.storage.sync.get({ enabled: true }, (result) => {
     enabled = result.enabled !== false;
+    maybeRedirectCurrentPage();
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -45,6 +47,19 @@
     }
   }
 
+  function markSkipOnce(wikipediaUrl) {
+    const key = skipRedirectStorageKey(wikipediaUrl);
+    if (!key) {
+      return;
+    }
+
+    try {
+      chrome.storage.session.set({ [key]: true });
+    } catch {
+      // Best-effort; without this, a modifier-click may still redirect on load.
+    }
+  }
+
   function navigateToGrokipedia(wikipediaUrl, grokipediaUrl, openInNewTab) {
     const targetUrl = grokipediaUrlWithFallback(wikipediaUrl, grokipediaUrl);
     storeFallbackUrl(wikipediaUrl, grokipediaUrl);
@@ -55,6 +70,45 @@
     }
 
     window.location.assign(targetUrl);
+  }
+
+  function consumeSkipFlag(wikipediaUrl, callback) {
+    const key = skipRedirectStorageKey(wikipediaUrl);
+    if (!key) {
+      callback(false);
+      return;
+    }
+
+    chrome.storage.session.get(key, (result) => {
+      if (result[key]) {
+        chrome.storage.session.remove(key);
+        callback(true);
+        return;
+      }
+      callback(false);
+    });
+  }
+
+  function maybeRedirectCurrentPage() {
+    if (pageRedirectChecked || !enabled) {
+      return;
+    }
+
+    pageRedirectChecked = true;
+
+    const wikipediaUrl = window.location.href;
+    const grokipediaUrl = wikipediaUrlToGrokipedia(wikipediaUrl);
+    if (!grokipediaUrl) {
+      return;
+    }
+
+    consumeSkipFlag(wikipediaUrl, (shouldSkip) => {
+      if (shouldSkip || !enabled) {
+        return;
+      }
+
+      navigateToGrokipedia(wikipediaUrl, grokipediaUrl, false);
+    });
   }
 
   function handleLinkNavigation(event) {
@@ -78,6 +132,10 @@
     }
 
     if (shouldBypass(event, anchor)) {
+      // Let the browser open Wikipedia, and skip auto-redirect once for that URL.
+      if (wikipediaUrlToGrokipedia(anchor.href)) {
+        markSkipOnce(anchor.href);
+      }
       return;
     }
 
@@ -101,4 +159,7 @@
 
   document.addEventListener("click", handleLinkNavigation, true);
   document.addEventListener("auxclick", handleLinkNavigation, true);
+
+  // Also redirect when landing directly on a Wikipedia article URL.
+  maybeRedirectCurrentPage();
 })();

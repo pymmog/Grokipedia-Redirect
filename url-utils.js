@@ -15,9 +15,27 @@
 
   const FALLBACK_HASH_PREFIX = "groki-fallback=";
   const SECTION_HASH_PARAM = "s=";
+  const SKIP_STORAGE_PREFIX = "skip:";
 
   function isWikipediaHost(hostname) {
     return WIKIPEDIA_HOST_PATTERN.test(hostname.toLowerCase());
+  }
+
+  function normalizeWikipediaUrl(href) {
+    let url;
+    try {
+      url = new URL(href);
+    } catch {
+      return null;
+    }
+
+    url.hash = "";
+    return url.href;
+  }
+
+  function skipRedirectStorageKey(wikipediaUrl) {
+    const normalized = normalizeWikipediaUrl(wikipediaUrl);
+    return normalized ? `${SKIP_STORAGE_PREFIX}${normalized}` : null;
   }
 
   function wikipediaUrlToGrokipedia(href) {
@@ -158,6 +176,8 @@
 
   global.isWikipediaHost = isWikipediaHost;
   global.wikipediaUrlToGrokipedia = wikipediaUrlToGrokipedia;
+  global.normalizeWikipediaUrl = normalizeWikipediaUrl;
+  global.skipRedirectStorageKey = skipRedirectStorageKey;
   global.grokipediaCheckUrl = grokipediaCheckUrl;
   global.fallbackStorageKey = fallbackStorageKey;
   global.grokipediaUrlWithFallback = grokipediaUrlWithFallback;
