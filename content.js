@@ -1,15 +1,16 @@
 (function () {
   "use strict";
 
+  // Default on so early clicks still redirect before storage resolves.
   let enabled = true;
 
   chrome.storage.sync.get({ enabled: true }, (result) => {
-    enabled = result.enabled;
+    enabled = result.enabled !== false;
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "sync" && changes.enabled) {
-      enabled = changes.enabled.newValue;
+      enabled = changes.enabled.newValue !== false;
     }
   });
 
@@ -26,13 +27,22 @@
       return true;
     }
 
+    // Leave modified/contenteditable contexts alone.
+    if (anchor.isContentEditable) {
+      return true;
+    }
+
     return false;
   }
 
   function storeFallbackUrl(wikipediaUrl, grokipediaUrl) {
-    chrome.storage.session.set({
-      [fallbackStorageKey(grokipediaUrl)]: wikipediaUrl,
-    });
+    try {
+      chrome.storage.session.set({
+        [fallbackStorageKey(grokipediaUrl)]: wikipediaUrl,
+      });
+    } catch {
+      // Session storage can be unavailable in rare contexts; hash fallback still works.
+    }
   }
 
   function navigateToGrokipedia(wikipediaUrl, grokipediaUrl, openInNewTab) {
@@ -40,7 +50,7 @@
     storeFallbackUrl(wikipediaUrl, grokipediaUrl);
 
     if (openInNewTab) {
-      window.open(targetUrl, "_blank", "noopener");
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -52,7 +62,13 @@
       return;
     }
 
+    // Only primary click and middle-click.
     if (event.button !== 0 && event.button !== 1) {
+      return;
+    }
+
+    // Ignore synthetic/repeated clicks.
+    if (typeof event.detail === "number" && event.detail > 1 && event.button === 0) {
       return;
     }
 

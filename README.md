@@ -15,7 +15,7 @@ When you click a Wikipedia article link anywhere in Chrome, the extension sends 
 2. Open Chrome and go to `chrome://extensions`
 3. Turn on **Developer mode** (toggle in the top-right corner)
 4. Click **Load unpacked**
-5. Select this project folder (`groki`)
+5. Select this project folder
 
 The extension icon should appear in your Chrome toolbar.
 
@@ -53,10 +53,16 @@ If you pull a newer version of this project:
 
 ## For developers
 
+Run URL mapping tests:
+
+```bash
+node scripts/test-url-utils.mjs
+```
+
 Regenerate toolbar icons after changing the source image:
 
 ```bash
 node scripts/generate-icons.mjs
 ```
 
-Source image: `icons/grokipedia-redirect.png`
+Source image: `icons/grokipedia-redirect.png`. The script prefers `sips` (macOS) or ImageMagick (`magick`/`convert`).

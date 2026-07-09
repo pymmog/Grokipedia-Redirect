@@ -14,12 +14,14 @@
     }
 
     const heading = document.querySelector("main h1, h1");
-    if (heading?.textContent?.trim() === "Article not found") {
+    if (heading?.textContent?.trim().toLowerCase() === "article not found") {
       return true;
     }
 
     return Boolean(
-      document.querySelector('img[src="/article_404_light.svg"], img[src="/article_404_dark.svg"]')
+      document.querySelector(
+        'img[src="/article_404_light.svg"], img[src="/article_404_dark.svg"], img[src*="article_404"]'
+      )
     );
   }
 
@@ -38,10 +40,6 @@
 
     const wikipediaTitle = encodeURI(title).replace(/%20/g, "_");
     return `https://en.wikipedia.org/wiki/${wikipediaTitle}`;
-  }
-
-  function resolveFallbackUrl() {
-    return getFallbackFromHash() || wikipediaUrlFromGrokipediaPage();
   }
 
   function redirectToWikipedia(wikipediaUrl) {
@@ -64,10 +62,14 @@
       return;
     }
 
-    const pageUrl = window.location.href.split("#")[0];
+    const pageUrl = grokipediaCheckUrl(window.location.href);
     const storageKey = fallbackStorageKey(pageUrl);
 
     chrome.storage.session.get(storageKey, (result) => {
+      if (redirected) {
+        return;
+      }
+
       const storedUrl = result[storageKey];
       if (storedUrl) {
         chrome.storage.session.remove(storageKey);
@@ -97,6 +99,12 @@
       if (isNotFoundPage()) {
         observer.disconnect();
         tryRedirect();
+        return;
+      }
+
+      // Article rendered successfully — restore any section hash and stop watching.
+      if (document.querySelector("main h1, article h1, h1")) {
+        tryCleanupHash();
       }
     });
 
@@ -111,6 +119,7 @@
     window.setTimeout(() => {
       observer.disconnect();
       tryRedirect();
+      tryCleanupHash();
     }, 3000);
   }
 

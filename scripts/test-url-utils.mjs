@@ -5,7 +5,40 @@ import vm from "node:vm";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const code = readFileSync(join(__dirname, "..", "url-utils.js"), "utf8");
-vm.runInThisContext(code);
+
+const sandbox = {
+  URL,
+  console,
+  window: {
+    location: {
+      hash: "",
+      pathname: "/page/Albert_Einstein",
+      search: "",
+    },
+    history: {
+      replaceStateCalls: [],
+      replaceState(state, title, url) {
+        this.replaceStateCalls.push(url);
+        const hashIndex = url.indexOf("#");
+        sandbox.window.location.hash = hashIndex >= 0 ? url.slice(hashIndex) : "";
+      },
+    },
+  },
+  globalThis: null,
+};
+sandbox.globalThis = sandbox;
+vm.createContext(sandbox);
+vm.runInContext(code, sandbox);
+
+const {
+  wikipediaUrlToGrokipedia,
+  grokipediaCheckUrl,
+  fallbackStorageKey,
+  grokipediaUrlWithFallback,
+  getFallbackFromHash,
+  getSectionFromFallbackHash,
+  clearFallbackHash,
+} = sandbox;
 
 const cases = [
   [
@@ -40,6 +73,18 @@ const cases = [
     "https://en.wikipedia.org/wiki/Kingdom_of_W%C3%BCrttemberg",
     "https://grokipedia.com/page/Kingdom_of_W%C3%BCrttemberg",
   ],
+  [
+    "https://en.wikipedia.org/wiki/Albert_Einstein?action=edit",
+    null,
+  ],
+  [
+    "https://en.wikipedia.org/w/index.php?title=Albert_Einstein",
+    null,
+  ],
+  [
+    "https://simple.wikipedia.org/wiki/Sun",
+    "https://grokipedia.com/page/Sun",
+  ],
 ];
 
 let failed = 0;
@@ -54,6 +99,10 @@ for (const [input, expected] of cases) {
 const checkUrlCases = [
   [
     "https://grokipedia.com/page/Albert_Einstein#Early_life",
+    "https://grokipedia.com/page/Albert_Einstein",
+  ],
+  [
+    "https://grokipedia.com/page/Albert_Einstein#groki-fallback=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FAlbert_Einstein&s=Early_life",
     "https://grokipedia.com/page/Albert_Einstein",
   ],
 ];
@@ -75,6 +124,11 @@ const fallbackHashCases = [
     "https://de.wikipedia.org/wiki/Albert_Einstein",
     "https://grokipedia.com/page/Albert_Einstein",
     "https://grokipedia.com/page/Albert_Einstein#groki-fallback=https%3A%2F%2Fde.wikipedia.org%2Fwiki%2FAlbert_Einstein",
+  ],
+  [
+    "https://en.wikipedia.org/wiki/Albert_Einstein#Early_life",
+    "https://grokipedia.com/page/Albert_Einstein#Early_life",
+    "https://grokipedia.com/page/Albert_Einstein#groki-fallback=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FAlbert_Einstein%23Early_life&s=Early_life",
   ],
 ];
 
@@ -104,25 +158,42 @@ for (const [wikipediaUrl, grokipediaUrl, expected] of fallbackHashCases) {
   }
 }
 
-global.window = {
-  location: {
-    hash: "#groki-fallback=https%3A%2F%2Fde.wikipedia.org%2Fwiki%2FAlbert_Einstein",
-    pathname: "/page/Albert_Einstein",
-    search: "",
-  },
-  history: { replaceState: () => {} },
-};
-
+sandbox.window.location.hash =
+  "#groki-fallback=https%3A%2F%2Fde.wikipedia.org%2Fwiki%2FAlbert_Einstein";
 const parsedFallback = getFallbackFromHash();
 if (parsedFallback !== "https://de.wikipedia.org/wiki/Albert_Einstein") {
   failed += 1;
   console.error(`FAIL parse hash\n  expected de wikipedia url\n  actual: ${parsedFallback}`);
 }
 
+sandbox.window.location.hash =
+  "#groki-fallback=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FAlbert_Einstein%23Early_life&s=Early_life";
+const parsedSection = getSectionFromFallbackHash();
+if (parsedSection !== "Early_life") {
+  failed += 1;
+  console.error(`FAIL parse section\n  expected Early_life\n  actual: ${parsedSection}`);
+}
+
+clearFallbackHash();
+const restoredHash = sandbox.window.location.hash;
+if (restoredHash !== "#Early_life") {
+  failed += 1;
+  console.error(`FAIL clear hash restore\n  expected #Early_life\n  actual: ${restoredHash}`);
+}
+
+// Idempotent re-injection should not throw or redefine.
+vm.runInContext(code, sandbox);
+
 if (failed > 0) {
   process.exit(1);
 }
 
 console.log(
-  `All ${cases.length + checkUrlCases.length + storageKeyCases.length + fallbackHashCases.length + 1} URL mapping tests passed.`
+  `All ${
+    cases.length +
+    checkUrlCases.length +
+    storageKeyCases.length +
+    fallbackHashCases.length +
+    3
+  } URL mapping tests passed.`
 );
