@@ -51,6 +51,34 @@ If you pull a newer version of this project:
 2. Find **Grokipedia Redirect**
 3. Click the refresh icon on the extension card
 
+## Safari (macOS)
+
+The shared extension logic lives in the repository root (Chrome load-unpacked). The `safari/` folder contains an Xcode project equivalent to running:
+
+```bash
+xcrun safari-web-extension-converter . --macos-only --app-name "Grokipedia Redirect" --bundle-identifier com.pymmog.grokipedia-redirect --project-location safari
+```
+
+### Build and run
+
+1. From the repo root, copy the latest shared files into the Safari extension bundle:
+
+   ```bash
+   ./scripts/sync-safari.sh
+   ```
+
+2. Open `safari/Grokipedia Redirect/Grokipedia Redirect.xcodeproj` in Xcode.
+3. Select the **Grokipedia Redirect** scheme and your **Personal Team** under Signing & Capabilities for both the app and the extension targets.
+4. Build and run (⌘R). macOS installs the containing app; enable the extension in Safari.
+
+### Enable the extension in Safari
+
+1. In Safari, open **Settings → Advanced** and turn on **Show features for web developers**.
+2. Open **Develop → Allow Unsigned Extensions** (required for local/debug builds).
+3. Open **Safari → Settings → Extensions**, enable **Grokipedia Redirect**, and allow it on the sites you use.
+
+Re-run `./scripts/sync-safari.sh` after changing root extension files, then rebuild in Xcode.
+
 ## For developers
 
 Regenerate toolbar icons after changing the source image:
@@ -60,3 +88,9 @@ node scripts/generate-icons.mjs
 ```
 
 Source image: `icons/grokipedia-redirect.png`
+
+Run URL mapping tests:
+
+```bash
+node scripts/test-url-utils.mjs
+```
