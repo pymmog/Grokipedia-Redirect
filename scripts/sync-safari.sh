@@ -8,6 +8,7 @@ mkdir -p "${DEST}/icons"
 
 FILES=(
   manifest.json
+  background.js
   browser-compat.js
   url-utils.js
   content.js
@@ -21,6 +22,7 @@ for file in "${FILES[@]}"; do
   cp "${ROOT}/${file}" "${DEST}/${file}"
 done
 
-cp -R "${ROOT}/icons/." "${DEST}/icons/"
+# Copy toolbar icons only (skip hidden source backups).
+find "${ROOT}/icons" -maxdepth 1 -type f -name '*.png' ! -name '.*' -exec cp {} "${DEST}/icons/" \;
 
 echo "Synced extension files to ${DEST}"
