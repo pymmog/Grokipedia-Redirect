@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  const sessionStorage = globalThis.grokiSessionStorage;
+
   let redirected = false;
 
   function isNotFoundPage() {
@@ -67,10 +69,10 @@
     const pageUrl = window.location.href.split("#")[0];
     const storageKey = fallbackStorageKey(pageUrl);
 
-    chrome.storage.session.get(storageKey, (result) => {
+    sessionStorage.get(storageKey, (result) => {
       const storedUrl = result[storageKey];
       if (storedUrl) {
-        chrome.storage.session.remove(storageKey);
+        sessionStorage.remove(storageKey);
         redirectToWikipedia(storedUrl);
         return;
       }

@@ -1,13 +1,16 @@
 (function () {
   "use strict";
 
+  const browser = globalThis.grokiBrowser ?? globalThis.browser ?? globalThis.chrome;
+  const sessionStorage = globalThis.grokiSessionStorage;
+
   let enabled = true;
 
-  chrome.storage.sync.get({ enabled: true }, (result) => {
+  browser.storage.sync.get({ enabled: true }, (result) => {
     enabled = result.enabled;
   });
 
-  chrome.storage.onChanged.addListener((changes, area) => {
+  browser.storage.onChanged.addListener((changes, area) => {
     if (area === "sync" && changes.enabled) {
       enabled = changes.enabled.newValue;
     }
@@ -30,7 +33,7 @@
   }
 
   function storeFallbackUrl(wikipediaUrl, grokipediaUrl) {
-    chrome.storage.session.set({
+    sessionStorage.set({
       [fallbackStorageKey(grokipediaUrl)]: wikipediaUrl,
     });
   }

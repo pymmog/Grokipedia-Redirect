@@ -16,13 +16,13 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["url-utils.js", "content.js"],
+      "js": ["browser-compat.js", "url-utils.js", "content.js"],
       "run_at": "document_start",
       "all_frames": true
     },
     {
       "matches": ["https://grokipedia.com/page/*"],
-      "js": ["url-utils.js", "grokipedia-fallback.js"],
+      "js": ["browser-compat.js", "url-utils.js", "grokipedia-fallback.js"],
       "run_at": "document_start"
     }
   ]
